@@ -1,0 +1,565 @@
+# library that allows you to download historical market data from Yahoo Finance.
+import yfinance as yf
+# messagebox is a module in the tkinter library that allows you to display message boxes with different types of messages
+from tkinter import messagebox
+from tkinter import *
+# simpledialog is a module in the tkinter library that provides a simple and convenient way to create dialogs to ask the user for input.
+from tkinter import simpledialog
+# library for creating GUI applications. It provides various widgets and functions to create windows and interact with the user.
+#filedialog: It is a sub-module of the tkinter library that provides a se
+import tkinter
+# It is a sub-module of the tkinter library that provides a set of functions to open and save files using a GUI dialog box.
+from tkinter import filedialog
+# It is a series of convenience functions to make basic image processing functions such as translation, rotation, resizing
+from imutils import paths
+from tkinter.filedialog import askopenfilename
+#It is a module that implements binary protocols for serializing and de-serializing a Python object structure.
+import pickle
+# It is a fast, powerful, flexible, and easy-to-use open-source data analysis and manipulation tool. It provides data structures
+#for efficiently storing and manipulating data in tabular form.
+import pandas as pd
+#library is used to specify dates for data retrieval.
+import datetime
+#it  is used to fetch financial data from online sources such as Yahoo Finance.
+import pandas_datareader.data as web
+#They are classes from the pandas library used to manipulate and analyze data.
+from pandas import Series, DataFrame
+#It  is a module of the matplotlib library used for data visualization.
+import matplotlib.pyplot as plt
+#style is a module from the matplotlib library that is used to customize the appearance of the plots.
+from matplotlib import style
+#matplotlib is a plotting library for Python. The mpl module is an alias for matplotlib
+import matplotlib as mpl
+#cm (color map) is a submodule of matplotlib used for defining and manipulating colormaps
+from matplotlib import cm as cm
+#t is used for performing mathmatical operations
+import math
+#package used for scientific computing in Python.
+import numpy as np
+#preprocessing is a module in the scikit-learn library that provides various tools for data preprocessing and data normalization.
+from sklearn import preprocessing
+#train_test_split is a function from the sklearn.model_selection module that splits data into training and testing sets for use in machine learning models.
+from sklearn.model_selection import train_test_split
+#KNeighborsRegressor is a class from the sklearn.neighbors module that performs regression using k-nearest neighbors.
+from sklearn.neighbors import KNeighborsRegressor
+#seaborn is a library that provides statistical visualizations in Python
+import seaborn as sns
+#statement imports the Support Vector Regression model from scikit-learn.
+from sklearn.svm import SVR 
+#function from scikit-learn, which will be used to calculate the mean squared error of our regression models.
+from sklearn.metrics import mean_squared_error
+#which provides a way of interacting with the operating system, e.g. for file I/O operations.
+import os
+#imports the Gradient Boosting Regressor model from scikit-learn.
+from sklearn.ensemble import GradientBoostingRegressor
+# It will be used to open an HTML file containing the output of the program.
+import webbrowser
+#class for creating sequential deep learning models using Keras library.
+from keras.models import Sequential
+# a class for creating fully connected layers in a neural network.
+from keras.layers import Dense
+#a class for creating Long Short-Term Memory (LSTM) layers in a neural network. 
+from keras.layers import LSTM  
+#a class for preventing overfitting in deep learning models.
+from keras.layers import Dropout
+#a class for performing Principal Component Analysis, which is a dimensionality reduction technique
+from sklearn.decomposition import PCA
+#a class for creating a random forest model for regression.
+from sklearn.ensemble import RandomForestRegressor
+
+#It is used to create the graphical user inerface using tkinter
+main = tkinter.Tk()
+#It is used to give the tittle to window
+main.title("Prediction of Stock Market")
+#It is used to set the geometry of the window
+main.geometry("1300x1200")
+
+#These are the various global variables that are used in code
+global dataFrame, dfreg
+#This variable is used to store the moving average of the stock price
+global moving_avg
+#It is used to store the closing values of the stocks
+global dfcomp
+#It is used in KNN algorithm
+global clfknn
+global clfknndist
+#X represents the input features,Y represents the output labels,X_train and Y_train represents the training data,X_test and Y_test represents the testing data.
+#X_pred represents the input features of prediction
+global X, y, X_train, y_train, X_test, y_test,X_pred
+global distknn, uniknn, knnunipred, knndistpred, mse_error, all_accuracy
+
+#FUNCTION FOR LOADING DATASET
+def loadDataset():
+    #Delete any text at start
+    text.delete('1.0', END)
+    global dataFrame
+    global dfcomp
+    #Sets start date to 01/01/2010
+    start = datetime.datetime(2010, 1, 1)
+    #Sets End date  to 11/01/2017
+    end = datetime.datetime(2017, 1, 11)
+    #It loads stock market data for the apple company
+    dataFrame =  web.DataReader("AAPL", 'stooq', start, end)
+    #displays the shape of the dataFrame
+    text.insert(END, "Shape of Apple Stock Dataset: "+str(dataFrame.shape)+"\n\n")
+    #displays the first two rows of the dataFrame
+    text.insert(END, "Sample of Apple Stock Data: \n"+str(dataFrame.head(2))+"\n\n")
+    # loads stock market data for several companies 
+    dfcomp = web.DataReader(['AAPL', 'GE', 'GOOG', 'IBM', 'MSFT'], 'stooq', start=start, end=end)
+    #selects only the 'Close' column from the dfcomp
+    print(dfcomp)
+    # displays the shape of the dfcomp
+    dfcomp = dfcomp['Close']
+    text.insert(END, "Shape of Apple Competitor Stock Dataset: " + str(dfcomp.shape) + "\n\n")
+    # displays the first two rows of the dfcomp
+    text.insert(END, "Sample of Apple Competitor Stock Data: \n" + str(dfcomp.head(2)) + "\n\n")
+    #shows Dataset Downloaded from Yahoo Finance Dataset
+    text.insert(END, "Dataset Downloaded from Yahoo Finance Dataset\n\n")
+
+def dfcorr():
+    #This deletes any existing text in the Text widget so that the new text can be inserted without appending to the old text.
+    text.delete('1.0', END)
+    global dfcomp
+    #This inserts the given string at the end of the Text widget, with two newlines added at the end for spacing
+    text.insert(END, "Correlation form Apple Competitor Stock\n\n")
+    #This calculates the percentage change in stock prices for each day in the dfcomp
+    retscomp = dfcomp.pct_change()
+    #This calculates the correlation matrix for the columns of retscomp, which gives the correlation between each pair of competitor stocks.
+    corr = retscomp.corr()
+    # This inserts the correlation matrix as a string at the end of the Text widget
+    text.insert(END, "correlation: \n"+str(corr)+"\n\n")
+
+
+def dataPreProcess():
+    #This deletes any existing text in the Text widget so that the new text can be inserted without appending to the old text.
+    text.delete('1.0', END)
+    global dataFrame,dfreg
+    global X, y, X_train, X_test, y_train, y_test,X_pred
+    #This inserts the given string at the end of the Text widget, with two newlines added at the end for spacing.
+    text.insert(END,"Data PreProcessing for Apple Stock Dataset\n\n")
+    #This creates a new DataFrame called dfreg that contains only the "Close" and "Volume" columns of the original dataFrame.
+    dfreg = dataFrame.loc[:,["Close","Volume"]]
+    #This calculates the percentage difference between the "High" and "Low" columns of the original dataFrame, and divides this by the "Close" column to get the percentage change. 
+    #This is stored in a new column called "HL_PCT" in the dfreg DataFrame.
+    dfreg["HL_PCT"] = (dataFrame["High"] - dataFrame["Low"]) / dataFrame["Close"] * 100.0
+    #This calculates the percentage change in the "Close" column relative to the "Open" column of the original dataFrame, and stores this in a new 
+    #column called "PCT_change" in the dfreg DataFrame.
+    dfreg["PCT_change"] = (dataFrame["Close"] - dataFrame["Open"]) / dataFrame["Open"] * 100.0
+
+    # Drop missing value
+    dfreg.fillna(value=-99999, inplace=True)
+    # We want to separate 1 percent of the data to forecast
+    forecast_out = int(math.ceil(0.01 * len(dfreg)))
+
+    # Separating the label here, we want to predict the AdjClose
+    forecast_col = 'Close'
+    dfreg['label'] = dfreg[forecast_col].shift(-forecast_out)
+    X = np.array(dfreg.drop(['label'], 1))
+
+    # Scale the X so that everyone can have the same distribution for linear regression
+    X = preprocessing.scale(X)
+    # Finally We want to find Data Series of late X and early X (train) for model generation and evaluation
+    X_pred = X[-forecast_out:]
+    X = X[:-forecast_out]
+    # Separate label and identify it as y
+    y = np.array(dfreg['label'])
+    y = y[:-forecast_out]
+
+    #This line inserts a text into the text widget to show the features of the dataset.
+    text.insert(END, "X lablels : \n"+str(X)+"\n\n")
+    # This line inserts a text into the text widget to show the target variable of the dataset.
+    text.insert(END, "Y lablels : \n"+str(y)+"\n\n")
+    #This line inserts a text into the text widget to show that the dataset is being split into training and testing sets.
+    text.insert(END, "Data spliting into Train and Test")
+    #This line splits the dataset into training and testing sets, with 70% of the data used for training and 30% used for testing.
+    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3)
+    #This line inserts a text into the text widget to show the number of samples in the training set.
+    text.insert(END, "number of Train Samples : " + str(len(X_train)) + "\n")
+    #This line inserts a text into the text widget to show the number of samples in the testing set
+    text.insert(END, "number of Test Sample: " + str(len(X_test)) + "\n")
+    #This line inserts a text into the text widget to indicate that the data preprocessing step has been completed.
+    text.insert(END, "Data Preprocessing Completed\n\n")
+
+def uniformKNN():
+    # clears the contents of the text widget that displays the output.
+    text.delete('1.0',END)
+    #global variables are decleared
+    global clfknn
+    global uniknn, clfknndist
+    global all_accuracy, mse_error
+    #all_accuracy and mse_error are initialized as empty lists.
+    all_accuracy = []
+    mse_error = []
+
+    # KNN Regression
+    #The code trains a K-Nearest Neighbor (KNN) regressor on the training data X_train and y_train. The n_neighbors parameter is set to 5, 
+    #which means that the model will consider the 5 nearest neighbors to make predictions. 
+    clfknn = KNeighborsRegressor(n_neighbors=5)
+    clfknn.fit(X_train, y_train)
+    #The score function is used to compute the coefficient of determination R^2 of the prediction, which is a measure of how well the model fits the data.
+    uniknn = clfknn.score(X_train, y_train)
+    #he results are stored in the uniknn variable and the all_accuracy and mse_error lists.
+    all_accuracy.append(uniknn*100)
+    mse_error.append(100 - (uniknn*100))
+    #The accuracy and mean squared error (MSE) of the model are then printed to the text widget.
+    text.insert(END, "Accuracy of KNN with Uniform weights : "+str(uniknn*100)+"\n")
+    text.insert(END, "MSE of KNN with Uniform weights : "+str(100 - (uniknn*100))+"\n\n")
+
+    clfknndist = KNeighborsRegressor(n_neighbors=5,weights='distance')
+    clfknndist.fit(X_train, y_train)
+    distknn = clfknndist.score(X_train, y_train)
+
+
+
+def graph():
+    #line clears the text widget where the program outputs messages.
+    text.delete('1.0', END)
+    global all_accuracy
+    #assigns the values of the global variable all_accuracy to the height variable.
+    height = all_accuracy
+    #assigns the names of the algorithms to the bars variable.
+    bars = ('KNN', 'SVM', 'Gradient Boosting', 'LSTM', 'PCA Random Forest')
+    #creates an array of indices to use as the x-coordinates for the bars.
+    y_pos = np.arange(len(bars))
+    # creates a bar chart with the heights specified by the height variable.
+    plt.bar(y_pos, height)
+    # labels the x-axis with the names of the algorithms.
+    plt.xticks(y_pos, bars)
+    #labels the x-axis with the text "Algorithm Names"
+    plt.xlabel("Algorithm Names")
+    # labels the y-axis with the text "Accuracy".
+    plt.ylabel("Accuracy")
+    #sets the title of the plot to "Accuracy Comparison Graph".
+    plt.title("Accuracy Comparison Graph")
+    #displays the plot.
+    plt.show()
+
+def mseGraph():
+    global mse_error
+    #assigns the values of the global variable mse_error to the height variable.
+    height = mse_error
+    ##assigns the names of the algorithms to the bars variable.
+    bars = ('KNN MSE', 'SVM MSE', 'Gradient Boosting MSE', 'LSTM MSE', 'PCA Random Forest MSE')
+    #creates an array of indices to use as the x-coordinates for the bars.
+    y_pos = np.arange(len(bars))
+    #creates a bar chart with the heights specified by the height variable.
+    plt.bar(y_pos, height)
+    #labels the x-axis with the names of the algorithms.
+    plt.xticks(y_pos, bars)
+    #lable x axis with text algorithm names
+    plt.xlabel("Algorithm Names")
+    #lable y axis with text MSE error
+    plt.ylabel("MSE Error")
+    #sets the title of the plot to "MSE comparison graph"
+    plt.title("MSE Comparison Graph")
+    #displays the plot.
+    plt.show()
+
+
+def createTable(original, predict, algorithm):
+    output = '<table border=1 align=left>'
+    # Adds a table row with column headers for "Original Price" and "[Algorithm Name] Predicted Price".
+    output+= '<tr><th>Original Price</th><th>'+algorithm+' Predicted Price</th></tr>'
+    # Loops through each index of the original list of prices.
+    for i in range(len(original)):
+    #Adds a table row with the original price at the current index in the first column and the predicted price at the current index using 
+     #the specified algorithm in the second column.
+        output += '<tr><td>'+str(original[i])+'</td><td>'+str(predict[i])+'</td></tr>'
+    output+='</table></body></html>'
+    #Creates a new file named "output.html" in write mode.
+    f = open("output.html", "w")
+    #Writes the HTML code in the output variable to the output.html file.
+    f.write(output)
+    #Closes the file.
+    f.close()
+    #Opens the output.html file in a new browser window.
+    webbrowser.open("output.html",new=1)
+
+def runRF():
+    global X, y, X_train, X_test, y_train, y_test,X_pred
+    text.insert(END,"Total attributes found in dataset before applying PCA : "+str(X.shape[1])+"\n")
+    pca = PCA(n_components=3)
+    X1 = pca.fit_transform(X)
+    X_train1,X_test1,y_train1,y_test1=train_test_split(X1,y,test_size=0.3)
+    text.insert(END,"Total attributes found in dataset after applying PCA : "+str(X1.shape[1])+"\n")
+    rf_regression = RandomForestRegressor()
+
+    #training RandomForestRegressor Regressor with X and Y data
+    rf_regression.fit(X1, y)
+
+    #performing prediction on test data
+    predict = rf_regression.predict(X_test1)
+    labels = y_test1
+    labels = labels[0:100]
+    predict = predict[0:100]
+
+    #calculating MSE error
+    svr_mse = mean_squared_error(labels,predict)
+    mse_error.append(svr_mse)
+    all_accuracy.append(100 - svr_mse)
+    text.insert(END, "Random Forest with PCA Mean Square Error : "+str(svr_mse)+"\n")
+    text.insert(END, "Random Forest with PCA Accuracy : "+str(100 - svr_mse)+"\n\n")
+    text.update_idletasks()
+    createTable(labels,predict,"Predicted Values using RF")
+
+    #plotting comparison graph between original values and predicted values
+    #This line creates a line plot for the original stock prices and sets the color of the line to red. 
+    plt.plot(labels, color = 'red', label = 'Original Stock Price')
+    #This line creates a line plot for the predicted stock prices using a Random Forest regression and sets the color of the line to green.
+    plt.plot(predict, color = 'green', label = 'Random Forest with PCA Regressor Predicted Price')
+    #Tittle of the graph
+    plt.title('Random Forest with PCA Stock Prediction')
+    #This line sets the label for the x-axis of the plot to "Test Data".
+    plt.xlabel('Test Data')
+    #This line sets the label for the y-axis of the plot to "Stock Prediction".
+    plt.ylabel('Stock Prediction')
+    #This line adds a legend to the plot based on the labels specified
+    plt.legend()
+    #This line displays the plot on the screen
+    plt.show()    
+
+def runSVM():
+    #text.delete('1.0', END)
+    global X, y, X_train, X_test, y_train, y_test,X_pred, mse_error
+    svr_regression = SVR(C=1.0, epsilon=0.2)
+
+    #training SVR with X and Y data
+    svr_regression.fit(X_train, y_train)
+
+    #performing prediction on test data
+    predict = svr_regression.predict(X_test)
+    labels = y_test
+    labels = labels[0:100]
+    predict = predict[0:100]
+
+    #calculating MSE error
+    svr_mse = mean_squared_error(labels,predict)
+    mse_error.append(svr_mse)
+    all_accuracy.append(100 - svr_mse)
+    text.insert(END, "SVM Mean Square Error : "+str(svr_mse)+"\n")
+    text.insert(END, "SVM Accuracy : "+str(100 - svr_mse)+"\n\n")
+    text.update_idletasks()
+    createTable(labels,predict,"SVM")
+
+    #plotting comparison graph between original values and predicted values
+    #This line creates a line plot for the original stock prices and sets the color of the line to red.
+    plt.plot(labels, color = 'red', label = 'Original Stock Price')
+    #This line creates a line plot for the predicted stock prices using SVM and sets the color of the line to green
+    plt.plot(predict, color = 'green', label = 'SVM Predicted Price')
+    #This line sets the title of the plot to"SVM Stock Prediction"
+    plt.title('SVM Stock Prediction')
+    #This line sets the label for the x-axis of the plot to "Test Data".
+    plt.xlabel('Test Data')
+    #This line sets the label for the y-axis of the plot to "Stock Prediction".
+    plt.ylabel('Stock Prediction')
+    #This line adds a legend to the plot based on the labels specified
+    plt.legend()
+    #This line displays the plot on the screen.
+    plt.show()
+
+def runGBR():
+    global X, y, X_train, X_test, y_train, y_test,X_pred
+
+    gbr_regression = GradientBoostingRegressor()
+
+    #training Gradient Boosting Regressor with X and Y data
+    gbr_regression.fit(X, y)
+
+    #performing prediction on test data
+    predict = gbr_regression.predict(X_test)
+    labels = y_test
+    labels = labels[0:100]
+    predict = predict[0:100]
+
+    #calculating MSE error
+    svr_mse = mean_squared_error(labels,predict)
+    mse_error.append(svr_mse)
+    all_accuracy.append(100 - svr_mse)
+    text.insert(END, "Gradient Boosting Regressor Mean Square Error : "+str(svr_mse)+"\n")
+    text.insert(END, "Gradient Boosting Accuracy : "+str(100 - svr_mse)+"\n\n")
+    text.update_idletasks()
+    createTable(labels,predict,"Predicted values using GBR")
+
+    #plotting comparison graph between original values and predicted values
+    #This line creates a line plot for the original stock prices and sets the color of the line to red. 
+    plt.plot(labels, color = 'red', label = 'Original Stock Price')
+    #This line creates a line plot for the predicted stock prices using a Gradient boosting and sets the color of the line to green
+    plt.plot(predict, color = 'green', label = 'Gradient Boosting Regressor Predicted Price')
+    #This line sets the title of the plot to "Gradient Boosting Regressor stock prediction"
+    plt.title('Gradient Boosting Regressor Stock Prediction')
+    #This line sets the label for the x-axis of the plot to "Test Data".
+    plt.xlabel('Test Data')
+    #This line sets the label for the y-axis of the plot to "Stock Prediction".
+    plt.ylabel('Stock Prediction')
+    #This line adds a legend to the plot based on the labels specified
+    plt.legend()
+    #This line displays the plot on the screen.
+    plt.show()
+    
+def runLSTM():
+    global X, y, X_train, X_test, y_train, y_test,X_pred
+    if os.path.exists("model/lstm.txt"):
+        with open('model/lstm.txt', 'rb') as file:
+            lstm = pickle.load(file)
+        file.close()
+    else:
+        XX = np.reshape(X, (X.shape[0], X.shape[1], 1))
+        print(XX.shape)
+        lstm = Sequential()
+        lstm.add(LSTM(units = 50, return_sequences = True, input_shape = (XX.shape[1], XX.shape[2])))
+        lstm.add(Dropout(0.2))
+        lstm.add(LSTM(units = 50, return_sequences = True))
+        lstm.add(Dropout(0.2))
+        lstm.add(LSTM(units = 50, return_sequences = True))
+        lstm.add(Dropout(0.2))
+        lstm.add(LSTM(units = 50))
+        lstm.add(Dropout(0.2))
+        lstm.add(Dense(units = 1))
+        lstm.compile(optimizer = 'adam', loss = 'mean_squared_error')
+        lstm.fit(XX, y, epochs = 1000, batch_size = 16)        
+    predict = lstm.predict(X_test)    
+    labels = y_test
+    labels = labels[0:100]
+    predict = predict[0:100]
+
+    #calculating MSE error
+    svr_mse = mean_squared_error(labels,predict)
+    mse_error.append(svr_mse)
+    all_accuracy.append(100 - svr_mse)
+    text.insert(END, "LSTM Mean Square Error : "+str(svr_mse)+"\n")
+    text.insert(END, "LSTM Accuracy : "+str(100 - svr_mse)+"\n\n")
+    text.update_idletasks()
+    createTable(labels,predict,"Predicted values using LSTM")
+
+    #plotting comparison graph between original values and predicted values
+    #This line creates a line plot for the original stock prices and sets the color of the line to red. 
+    plt.plot(labels, color = 'red', label = 'Original Stock Price')
+    This line creates a line plot for the predicted stock prices using a LSTM and sets the color  to green
+    plt.plot(predict, color = 'green', label = 'LSTM Predicted Price')
+    #This line sets the title of the plot to "LSTM stock prediction"
+    plt.title('LSTM Tree Stock Prediction')
+    #This line sets the label for the x-axis of the plot to "Test Data".
+    plt.xlabel('Test Data')
+    #This line sets the label for the y-axis of the plot to "Stock Prediction".
+    plt.ylabel('Stock Prediction')
+    #This line adds a legend to the plot based on the labels specified
+    plt.legend()
+    #This line displays the plot on the screen.
+    plt.show()
+
+
+font = ('times', 16, 'bold')
+#It is used to give the title "prediction of stock market at main page"
+title = Label(main, text='Prediction of Stock Market')
+#Background color and text color of title 
+title.config(bg='DarkGoldenrod1', fg='black')
+#Font and size of the title
+title.config(font=font)
+#coordinates at which title should place
+title.config(height=3, width=120)
+title.place(x=0,y=5)
+
+font1 = ('times', 13, 'bold')
+
+This code creates a tkinter Button widget with the label "Download Dataset" and assigns it to the variable UploadButton. When the button is clicked, 
+it calls the function loadDataset.
+uploadButton = Button(main, text="Download Dataset", command=loadDataset)
+# places the button widget in the parent window.
+uploadButton.place(x=700,y=100)
+#sets the font of the button to the value assigned to the variable.
+uploadButton.config(font=font1)
+
+#This creates a tkinter Button widget with the label "Correlation for Data" and assigns it to the variable corrButton. When the button is clicked, it calls 
+the function dfcorr.
+corrButton = Button(main, text="Correlation for Data", command=dfcorr)
+# places the button widget in the parent window.
+corrButton.place(x=700,y=150)
+#sets the font of the button to the value assigned to the variable 
+corrButton.config(font=font1)
+
+#This code creates a tkinter Button widget with the label "Data Preprocessing" and assigns it to the variable ppButton. When the button is clicked, 
+it calls the function dataPreProcess.
+ppButton = Button(main, text="Data Preprocessing", command=dataPreProcess)
+#places the button widget in the parent window.
+ppButton.place(x=700,y=200)
+#sets the font of the button to the value assigned to the variable 
+ppButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Run KNN with Uniform weights" and assigns it to the variable UniformButton. When the button is clicked, 
+it calls the function uniformKNN.
+uniformButton = Button(main, text="Run KNN with Uniform Weights", command=uniformKNN)
+# places the button widget in the parent window.
+uniformButton.place(x=700,y=250)
+#sets the font of the button to the value assigned to the variable 
+uniformButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Run SVM Algorithm" and assigns it to the variable svmButton. When the button is clicked,
+ it calls the function runSVM.
+svmButton = Button(main, text="Run SVM Algorithm", command=runSVM)
+# places the button widget in the parent window.
+svmButton.place(x=700,y=300)
+#sets the font of the button to the value assigned to the variable 
+svmButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Run Gradient Boosting Regressor Algorithm" and assigns it to the variable dtButton. When the button 
+is clicked, it calls the function runGBR
+dtButton = Button(main, text="Run Gradient Boosting Regressor Algorithm", command=runGBR)
+# places the button widget in the parent window.
+dtButton.place(x=700,y=350)
+#sets the font of the button to the value assigned to the variable 
+dtButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Run LSTM Algorithm" and assigns it to the variable lstmbutton. When the button is clicked, 
+it calls the function runLSTM.
+lstmButton = Button(main, text="Run LSTM Algorithm", command=runLSTM)
+# places the button widget in the parent window.
+lstmButton.place(x=700,y=400)
+#sets the font of the button to the value assigned to the variable 
+lstmButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Run Random Forest with PCA " and assigns it to the variable rfButton. When the button is clicked, it 
+calls the function runRF.
+rfButton = Button(main, text="Run Random Forest with PCA", command=runRF)
+# places the button widget in the parent window.
+rfButton.place(x=700,y=450)
+#sets the font of the button to the value assigned to the variable 
+rfButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Predict the test data" and assigns it to the variable predButton. When the button is clicked, 
+it calls the function predModel
+predButton = Button(main, text="Predict the Test Data ", command=predModel)
+# places the button widget in the parent window.
+predButton.place(x=700,y=500)
+#sets the font of the button to the value assigned to the variable 
+predButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Accuracy Graph" and assigns it to the variable graphButton. When the button is clicked, 
+it calls the function graph.
+graphButton = Button(main, text="Accuracy Graph", command=graph)
+# places the button widget in the parent window.
+graphButton.place(x=700,y=550)
+#sets the font of the button to the value assigned to the variable 
+graphButton.config(font=font1)
+
+This code creates a tkinter Button widget with the label "Mean Square Error Graph" and assigns it to the variable graph1Button. When the button is clicked, 
+it calls the function mseGraph.
+graph1Button = Button(main, text="Mean Square Error Graph", command=mseGraph)
+# places the button widget in the parent window.
+graph1Button.place(x=700,y=600)
+#sets the font of the button to the value assigned to the variable 
+graph1Button.config(font=font1)
+
+font2 = ('times', 12, 'bold')
+text=Text(main,height=30,width=80)
+scroll=Scrollbar(text)
+text.configure(yscrollcommand=scroll.set)
+text.place(x=10,y=100)
+text.config(font=font2)
+
+#It sets the background color of main window
+main.config(bg='LightSteelBlue1')
+# runs the main event loop of the application, which continuously waits for events such as mouse clicks and keyboard presses.
+main.mainloop()
+
+stockpredictfinal.py
+Displaying stockpredictfinal.py.
